@@ -8,6 +8,7 @@ This is a simple Todo application that allows users to create, read, update, and
 
 - Create a new todo
 - Retrieve a list of todos with pagination, sorting, filtering, and searching
+- After adding more than 5 todos 6th todo will be added  on second page
 - Retrieve a specific todo by ID
 - Update a todo
 - Delete a todo
