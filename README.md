@@ -23,4 +23,4 @@ This is a simple Todo application that allows users to create, read, update, and
 ### Clone the repository
 
 ```bash
-cd todo-assign
+cd todoApp
