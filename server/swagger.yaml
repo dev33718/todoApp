@@ -1,0 +1,116 @@
+openapi: 3.0.0
+info:
+  title: Todo API
+  description: CRUD operations for managing todos
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local server
+paths:
+  /todos:
+    get:
+      summary: Get all todos
+      responses:
+        '200':
+          description: A list of todos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Todo'
+    post:
+      summary: Create a new todo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewTodo'
+      responses:
+        '201':
+          description: The newly created todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+  /todos/{id}:
+    get:
+      summary: Get a todo by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the todo to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: The requested todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+    put:
+      summary: Update a todo by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the todo to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTodo'
+      responses:
+        '200':
+          description: Success message
+    delete:
+      summary: Delete a todo by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID of the todo to delete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success message
+components:
+  schemas:
+    Todo:
+      type: object
+      properties:
+        todo_id:
+          type: integer
+        description:
+          type: string
+        category:
+          type: string
+      required:
+        - description
+        - category
+
+    NewTodo:
+      type: object
+      properties:
+        description:
+          type: string
+        category:
+          type: string
+      required:
+        - description
+        - category
+
+    UpdateTodo:
+      type: object
+      properties:
+        description:
+          type: string
+        category:
+          type: string
