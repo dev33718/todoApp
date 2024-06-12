@@ -21,11 +21,15 @@ const InputTodo = () => {
       const body = { description, category };
       await fetch("http://localhost:5000/todos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      // Redirect to home page after successful submission
-      window.location = "/";
+      // Reset input fields
+      setDescription("");
+      setCategory("");
+      // Update UI without reloading the page
+      // Add logic to update the list of todos as needed
+      // Clear the error message
+      setErrorMessage("");
     } catch (err) {
       console.error(err.message);
     }
@@ -51,7 +55,7 @@ const InputTodo = () => {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
-        <button className="btn btn-success">Add</button>
+        <button type="submit" className="btn btn-success">Add</button>
       </form>
     </Fragment>
   );

@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState, useCallback } from "react";
 import EditTodo from "./EditTodo";
 
 const ListTodos = () => {
@@ -9,7 +9,7 @@ const ListTodos = () => {
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchTodos = async () => {
+  const fetchTodos = useCallback(async () => {
     try {
       const response = await fetch(
         `http://localhost:5000/todos?search=${searchQuery}&sortBy=${sortBy}&order=${order}&filter=${filter}&page=${currentPage}`
@@ -19,11 +19,11 @@ const ListTodos = () => {
     } catch (error) {
       console.error("Error fetching todos:", error);
     }
-  };
+  }, [searchQuery, sortBy, order, filter, currentPage]);
 
   useEffect(() => {
     fetchTodos();
-  }, [searchQuery, sortBy, order, filter, currentPage]);
+  }, [fetchTodos]);
 
   const updateTodoInState = (updatedTodo) => {
     setTodos((prevTodos) =>

@@ -8,4 +8,8 @@ CREATE TABLE todos(
 ALTER TABLE todos
 ADD COLUMN category VARCHAR(255);
 
-CREATE SEQUENCE todos_seq;
+CREATE TABLE users (
+  user_id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  token VARCHAR(255)
+);
