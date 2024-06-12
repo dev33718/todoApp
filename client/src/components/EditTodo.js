@@ -19,7 +19,7 @@ const EditTodo = ({ todo, updateTodoInState }) => {
 
       if (response.ok) {
         const updatedTodo = { ...todo, description, category };
-        updateTodoInState(updatedTodo); // Update the todo list in the parent component
+        updateTodoInState(updatedTodo);
       } else {
         console.error("Failed to update todo");
       }

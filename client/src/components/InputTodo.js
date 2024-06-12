@@ -39,7 +39,6 @@ const InputTodo = () => {
     <Fragment>
       <h1 className="text-center">Todo List</h1>
       <form className="d-flex flex-column align-items-center mt-5" onSubmit={onSubmitForm}>
-        {/* Display error message if present */}
         {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
         <input
           type="text"
