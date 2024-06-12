@@ -1,10 +1,8 @@
-// Dashboard component
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
-import ListTodo from './ListTodos'; // Import the ListTodo component
-import InputTodo from './InputTodo'; // Import the InputTodo component
-import Logout from './Logout'; // Import the Logout component
+import ListTodo from './ListTodos';
+import InputTodo from './InputTodo';
+import Logout from './Logout';
 
 const ValidateToken = ({ children }) => {
   const location = useLocation();
@@ -40,7 +38,7 @@ const ValidateToken = ({ children }) => {
     return <div>Loading...</div>;
   }
 
-  return children; // Render children if token is valid
+  return children;
 };
 
 const Dashboard = () => {
@@ -48,11 +46,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No token found');
-      return;
-    }
-
+    history.push('/');
     try {
       const response = await fetch('http://localhost:5000/api/auth/logout', {
         method: 'POST',
@@ -62,8 +56,7 @@ const Dashboard = () => {
         body: JSON.stringify({ token }),
       });
       if (response.ok) {
-        localStorage.removeItem('token'); // Clear token from localStorage
-        history.push('/'); // Redirect to login page
+        localStorage.removeItem('token');
       } else {
         const data = await response.json();
         throw new Error(data.error || 'Logout failed');
@@ -76,7 +69,7 @@ const Dashboard = () => {
   return (
     <ValidateToken>
       <div>
-        <Logout onLogout={handleLogout} /> {/* Pass the logout function as a prop */}
+        <Logout onLogout={handleLogout} />
         <InputTodo />
         <ListTodo />
       </div>

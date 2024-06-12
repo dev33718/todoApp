@@ -3,9 +3,18 @@ import React, { Fragment, useState } from "react";
 const EditTodo = ({ todo, updateTodoInState }) => {
   const [description, setDescription] = useState(todo.description);
   const [category, setCategory] = useState(todo.category);
+  const [initialValues, setInitialValues] = useState({ description: todo.description, category: todo.category });
 
   const updateDescription = async (e) => {
     e.preventDefault();
+    if (!description.trim() || !category.trim()) {
+      alert("Description and category cannot be empty");
+      return;
+    }
+    if (category.trim() !== "Work" && category.trim() !== "Personal") {
+      alert("Category should be either 'Work' or 'Personal'");
+      return;
+    }
     try {
       const body = { description, category };
       const response = await fetch(
@@ -21,11 +30,17 @@ const EditTodo = ({ todo, updateTodoInState }) => {
         const updatedTodo = { ...todo, description, category };
         updateTodoInState(updatedTodo);
       } else {
-        console.error("Failed to update todo");
+        alert("Failed to update todo");
       }
     } catch (err) {
       console.error(err.message);
+      alert("Failed to update todo");
     }
+  };
+
+  const resetValues = () => {
+    setDescription(initialValues.description);
+    setCategory(initialValues.category);
   };
 
   return (
@@ -36,6 +51,7 @@ const EditTodo = ({ todo, updateTodoInState }) => {
         data-toggle="modal"
         data-target={`#id${todo.todo_id}`}
         aria-label="Edit Todo"
+        onClick={() => setInitialValues({ description, category })}
       >
         Edit
       </button>
@@ -43,9 +59,10 @@ const EditTodo = ({ todo, updateTodoInState }) => {
       <div
         className="modal"
         id={`id${todo.todo_id}`}
-        onClick={() => {
-          setDescription(todo.description);
-          setCategory(todo.category);
+        onClick={(e) => {
+          if (e.target.className === 'modal') {
+            resetValues();
+          }
         }}
       >
         <div className="modal-dialog">
@@ -56,10 +73,7 @@ const EditTodo = ({ todo, updateTodoInState }) => {
                 type="button"
                 className="close"
                 data-dismiss="modal"
-                onClick={() => {
-                  setDescription(todo.description);
-                  setCategory(todo.category);
-                }}
+                onClick={resetValues}
               >
                 &times;
               </button>
@@ -76,7 +90,7 @@ const EditTodo = ({ todo, updateTodoInState }) => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter a category..."
+                placeholder="Enter a category (Work/Personal)..."
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               />
@@ -95,10 +109,7 @@ const EditTodo = ({ todo, updateTodoInState }) => {
                 type="button"
                 className="btn btn-danger"
                 data-dismiss="modal"
-                onClick={() => {
-                  setDescription(todo.description);
-                  setCategory(todo.category);
-                }}
+                onClick={resetValues}
               >
                 Close
               </button>

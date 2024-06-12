@@ -7,31 +7,34 @@ const InputTodo = () => {
 
   const onSubmitForm = async (e) => {
     e.preventDefault();
-    // Check if input fields are empty
     if (!description.trim() || !category.trim()) {
       setErrorMessage("Description and category cannot be empty");
       return;
     }
-    // Check if category is either "Work" or "Personal"
     if (category.trim() !== "Work" && category.trim() !== "Personal") {
       setErrorMessage("Category should be either 'Work' or 'Personal'");
       return;
     }
     try {
       const body = { description, category };
-      await fetch("http://localhost:5000/todos", {
+      const response = await fetch("http://localhost:5000/todos", {
         method: "POST",
-        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
       });
-      // Reset input fields
-      setDescription("");
-      setCategory("");
-      // Update UI without reloading the page
-      // Add logic to update the list of todos as needed
-      // Clear the error message
-      setErrorMessage("");
+      if (response.ok) {
+        setDescription("");
+        setCategory("");
+        setErrorMessage("");
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || "Error adding todo");
+      }
     } catch (err) {
       console.error(err.message);
+      setErrorMessage("Error adding todo");
     }
   };
 

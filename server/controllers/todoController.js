@@ -17,11 +17,14 @@ const transporter = nodemailer.createTransport({
 const createTodo = async (req, res) => {
   try {
     const { description, category } = req.body;
+    if (!description || !category) {
+      return res.status(400).json({ message: 'Description and category are required' });
+    }
     const newTodo = await pool.query(
       "INSERT INTO todos (description, category) VALUES ($1, $2) RETURNING *",
       [description, category]
     );
-    res.json(newTodo.rows[0]);
+    res.status(201).json(newTodo.rows[0]);
   } catch (err) {
     console.error("Error creating todo:", err);
     res.status(500).send("Server Error");
@@ -62,6 +65,9 @@ const getTodoById = async (req, res) => {
   try {
     const { id } = req.params;
     const todo = await pool.query("SELECT * FROM todos WHERE todo_id = $1", [id]);
+    if (todo.rows.length === 0) {
+      return res.status(404).json({ message: 'Todo not found' });
+    }
     res.json(todo.rows[0]);
   } catch (err) {
     console.error("Error fetching todo by ID:", err);
@@ -73,10 +79,16 @@ const getTodoById = async (req, res) => {
 const updateTodo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { description, category } = req.body; // Add category from request body
+    const { description, category } = req.body;
+    if (!description || !category) {
+      return res.status(400).json({ message: 'Description and category are required' });
+    }
+    if (category !== "Work" && category !== "Personal") {
+      return res.status(400).json({ message: "Category should be either 'Work' or 'Personal'" });
+    }
     await pool.query(
       "UPDATE todos SET description = $1, category = $2 WHERE todo_id = $3",
-      [description, category, id] // Update parameters to include category
+      [description, category, id]
     );
     res.json({ message: "Todo was updated successfully" });
   } catch (err) {
@@ -89,7 +101,10 @@ const updateTodo = async (req, res) => {
 const deleteTodo = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM todos WHERE todo_id = $1", [id]);
+    const deletedTodo = await pool.query("DELETE FROM todos WHERE todo_id = $1 RETURNING *", [id]);
+    if (deletedTodo.rows.length === 0) {
+      return res.status(404).json({ message: 'Todo not found' });
+    }
     res.json({ message: "Todo was deleted successfully" });
   } catch (err) {
     console.error("Error deleting todo:", err);
@@ -101,20 +116,15 @@ const deleteTodo = async (req, res) => {
 const register = async (req, res) => {
   try {
     const { email } = req.body;
-
-    // Check if the user is already registered
-    const existingUser = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
-      return res.status(400).send('User already registered. Please log in.');
+      return res.status(400).json({ message: 'User already registered. Please log in.' });
     }
 
-    // Generate a token
     const token = jwt.sign({ email }, config.JWT_SECRET, { expiresIn: '1h' });
 
-    // Insert the user into the database
-    await pool.query("INSERT INTO users (email, token) VALUES ($1, $2)", [email, token]);
+    await pool.query('INSERT INTO users (email, token) VALUES ($1, $2)', [email, token]);
 
-    // Send email with registration link
     const link = `${config.FRONTEND_URL}/dashboard?token=${token}`;
     const mailOptions = {
       from: config.EMAIL_USER,
@@ -125,15 +135,14 @@ const register = async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error("Error sending email:", error);
-        return res.status(500).json({ error: 'Error sending email' });
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Error sending email' });
       }
-      // Redirect to login screen
-      res.status(200).json({ message: 'Registered successfully. Please log in.' });
+      res.status(200).json({ message: 'Registered successfully. Please check your email.' });
     });
   } catch (error) {
-    console.error("Error registering user:", error);
-    res.status(500).send("Server Error");
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -141,18 +150,15 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email } = req.body;
-
-    // Check if the user is registered
-    const existingUser = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length === 0) {
-      return res.status(400).send('User not registered. Please register first.');
+      return res.status(400).json({ message: 'User not registered. Please register first.' });
     }
 
     const token = jwt.sign({ email }, config.JWT_SECRET, { expiresIn: '1h' });
-    await pool.query("UPDATE users SET token = $1 WHERE email = $2", [token, email]);
+    await pool.query('UPDATE users SET token = $1 WHERE email = $2', [token, email]);
 
     const link = `${config.FRONTEND_URL}/dashboard?token=${token}`;
-
     const mailOptions = {
       from: config.EMAIL_USER,
       to: email,
@@ -162,13 +168,14 @@ const login = async (req, res) => {
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        return res.status(500).json({ error: 'Error sending email' });
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Error sending email' });
       }
-      res.status(200).json({ message: 'Login email sent', token });
+      res.status(200).json({ message: 'Login email sent' });
     });
   } catch (error) {
-    console.error("Error logging in user:", error);
-    res.status(500).json({ error: "Server Error" });
+    console.error('Error logging in user:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -177,21 +184,19 @@ const validate = async (req, res) => {
   try {
     const { token } = req.query;
 
-    // Verify the token
     const decoded = jwt.verify(token, config.JWT_SECRET);
     if (decoded) {
-      // Token is valid
       res.status(200).json({ message: 'Token is valid' });
     } else {
-      // Token is invalid
       res.status(401).json({ error: 'Invalid token' });
     }
   } catch (err) {
     console.error("Error validating token:", err);
-    res.status(500).json({ error: 'Internal Server Error' }); // Send JSON response for other errors
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
+// Logout route
 const logout = async (req, res) => {
   try {
     const { token } = req.body;
@@ -200,14 +205,11 @@ const logout = async (req, res) => {
       return res.status(400).json({ error: 'Token is required' });
     }
 
-    // Verify the token to extract the email
     const decoded = jwt.verify(token, config.JWT_SECRET);
     const email = decoded.email;
 
-    // Generate a new token for the user
     const newToken = jwt.sign({ email }, config.JWT_SECRET, { expiresIn: '1h' });
 
-    // Update the user's token with the new one
     await pool.query("UPDATE users SET token = $1 WHERE email = $2", [newToken, email]);
 
     res.status(200).json({ message: 'Logged out successfully' });

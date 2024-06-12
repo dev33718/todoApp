@@ -8,7 +8,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(''); // Reset the message state
+    setMessage('');
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
@@ -18,23 +18,16 @@ const Login = () => {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json(); // Parsing JSON here regardless of response status
+      const data = await response.json();
 
       if (response.ok) {
-        console.log('Login Response Data:', data); // Log the response data
-        if (data.token) {
-          localStorage.setItem('token', data.token); // Store token in localStorage
-          setMessage('Login successful');
-          history.push('/dashboard'); // Redirect to dashboard after successful login
-        } else {
-          setMessage('Token not received');
-        }
+        setMessage('Login email sent.');
+        history.push('/dashboard');
       } else {
-        setMessage(`Error: ${data.message}`); // Handling error message from backend
+        setMessage(data.message);
       }
     } catch (error) {
-      console.error('Catch error:', error); // Log the actual error
-      setMessage('Error sending email');
+      setMessage('Error sending link');
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Register.css'; // Import your CSS file for styling
+import './Register.css';
 
 const Register = ({ setLoggedIn }) => {
   const [email, setEmail] = useState('');
@@ -8,43 +8,33 @@ const Register = ({ setLoggedIn }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage('');
     try {
-      if (isLogin) {
-        // Login logic
-        const response = await fetch('http://localhost:5000/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email }),
-        });
-        if (response.ok) {
-          setLoggedIn(true);
-          setMessage(''); // Reset the error message
+      const endpoint = isLogin ? 'login' : 'register';
+      const response = await fetch(`http://localhost:5000/api/auth/${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (isLogin) {
+          setMessage('Login email sent.');
+          if (setLoggedIn) setLoggedIn(true);
         } else {
-          setMessage('Invalid email or not registered');
+          setMessage('Registered successfully. Please check your email.');
         }
       } else {
-        // Register logic
-        const response = await fetch('http://localhost:5000/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email }),
-        });
-        if (response.ok) {
-          setMessage('Registered successfully. Please log in.');
-        } else if (response.status === 400) {
-          setMessage('User already registered. Please log in.');
-        } else {
-          setMessage('Error sending email');
-        }
+        setMessage(data.message);
       }
     } catch (error) {
       setMessage('Error sending email');
     }
-  };  
+  };
 
   return (
     <div>
