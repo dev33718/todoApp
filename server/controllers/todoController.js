@@ -13,18 +13,32 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Helper function to store idempotent key and response
+const storeIdempotentKeyResponse = async (key, response) => {
+  await pool.query(
+    "INSERT INTO idempotent_key (key, response) VALUES ($1, $2)",
+    [key, response]
+  );
+};
+
 // Create a todo
 const createTodo = async (req, res) => {
   try {
-    const { description, category } = req.body;
+    const { description, category, idempotentKey } = req.body;
     if (!description || !category) {
       return res.status(400).json({ message: 'Description and category are required' });
     }
+
     const newTodo = await pool.query(
       "INSERT INTO todos (description, category) VALUES ($1, $2) RETURNING *",
       [description, category]
     );
-    res.status(201).json(newTodo.rows[0]);
+
+    const response = newTodo.rows[0];
+
+    await storeIdempotentKeyResponse(idempotentKey, response);
+
+    res.status(201).json(response);
   } catch (err) {
     console.error("Error creating todo:", err);
     res.status(500).send("Server Error");
@@ -115,7 +129,7 @@ const deleteTodo = async (req, res) => {
 // Register route
 const register = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, idempotentKey } = req.body;
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ message: 'User already registered. Please log in.' });
@@ -138,7 +152,9 @@ const register = async (req, res) => {
         console.error('Error sending email:', error);
         return res.status(500).json({ message: 'Error sending email' });
       }
-      res.status(200).json({ message: 'Registered successfully. Please check your email.' });
+      const response = { message: 'Registered successfully. Please check your email.' };
+      storeIdempotentKeyResponse(idempotentKey, response);
+      res.status(200).json(response);
     });
   } catch (error) {
     console.error('Error registering user:', error);
@@ -149,7 +165,7 @@ const register = async (req, res) => {
 // Login route
 const login = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, idempotentKey } = req.body;
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length === 0) {
       return res.status(400).json({ message: 'User not registered. Please register first.' });
@@ -166,12 +182,15 @@ const login = async (req, res) => {
       text: `Click on the link to login: ${link}`,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
         return res.status(500).json({ message: 'Error sending email' });
       }
-      res.status(200).json({ message: 'Login email sent' });
+      
+      const response = { message: 'Login email sent' };
+      await storeIdempotentKeyResponse(idempotentKey, response);
+      res.status(200).json(response);
     });
   } catch (error) {
     console.error('Error logging in user:', error);
@@ -199,7 +218,7 @@ const validate = async (req, res) => {
 // Logout route
 const logout = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, idempotentKey } = req.body;
 
     if (!token) {
       return res.status(400).json({ error: 'Token is required' });
@@ -212,7 +231,9 @@ const logout = async (req, res) => {
 
     await pool.query("UPDATE users SET token = $1 WHERE email = $2", [newToken, email]);
 
-    res.status(200).json({ message: 'Logged out successfully' });
+    const response = { message: 'Logged out successfully' };
+    storeIdempotentKeyResponse(idempotentKey, response);
+    res.status(200).json(response);
   } catch (error) {
     console.error("Error logging out:", error);
     res.status(500).send("Server Error");

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import './Register.css';
 
 const Register = ({ setLoggedIn }) => {
@@ -10,13 +11,14 @@ const Register = ({ setLoggedIn }) => {
     e.preventDefault();
     setMessage('');
     try {
+      const idempotentKey = uuidv4();
       const endpoint = isLogin ? 'login' : 'register';
       const response = await fetch(`http://localhost:5000/api/auth/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, idempotentKey }),
       });
 
       const data = await response.json();

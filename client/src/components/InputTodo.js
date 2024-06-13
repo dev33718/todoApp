@@ -1,4 +1,5 @@
 import React, { Fragment, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 const InputTodo = () => {
   const [description, setDescription] = useState("");
@@ -16,7 +17,8 @@ const InputTodo = () => {
       return;
     }
     try {
-      const body = { description, category };
+      const idempotentKey = uuidv4();
+      const body = { description, category, idempotentKey };
       const response = await fetch("http://localhost:5000/todos", {
         method: "POST",
         headers: {

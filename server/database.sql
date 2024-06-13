@@ -13,3 +13,9 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   token VARCHAR(255)
 );
+
+CREATE TABLE idempotent_keys (
+  key VARCHAR(255) PRIMARY KEY,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  response JSONB
+);

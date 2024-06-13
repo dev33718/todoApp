@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import ListTodo from './ListTodos';
 import InputTodo from './InputTodo';
 import Logout from './Logout';
@@ -48,12 +49,13 @@ const Dashboard = () => {
     const token = localStorage.getItem('token');
     history.push('/');
     try {
+      const idempotentKey = uuidv4();
       const response = await fetch('http://localhost:5000/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, idempotentKey }),
       });
       if (response.ok) {
         localStorage.removeItem('token');
