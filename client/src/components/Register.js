@@ -29,6 +29,8 @@ const Register = ({ setLoggedIn }) => {
       if (response.ok) {
         if (isLogin) {
           if (data.message === 'Login email sent') {
+            const token = data.token;
+            localStorage.setItem('token', token);
             setMessage('Login email sent.');
             if (setLoggedIn) setLoggedIn(true);
           } else if (data.message === 'Login email already sent. Please check your email.') {

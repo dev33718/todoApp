@@ -187,13 +187,13 @@ const login = async (req, res) => {
       return res.status(400).json({ message: 'Login email already sent. Please check your email.' });
     }
 
-
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length === 0) {
       return res.status(400).json({ message: 'User not registered. Please register first.' });
     }
 
     const token = jwt.sign({ email }, config.JWT_SECRET, { expiresIn: '1h' });
+
     await pool.query('UPDATE users SET token = $1 WHERE email = $2', [token, email]);
 
     const link = `${config.FRONTEND_URL}/dashboard?token=${token}`;
@@ -209,9 +209,11 @@ const login = async (req, res) => {
         console.error('Error sending email:', error);
         return res.status(500).json({ message: 'Error sending email' });
       }
-      
-      const response = { message: 'Login email sent' };
+
+      const response = { message: 'Login email sent', token };
+
       await storeIdempotentKeyResponse(idempotentKey, response);
+
       res.status(200).json(response);
     });
   } catch (error) {
@@ -224,6 +226,16 @@ const login = async (req, res) => {
 const validate = async (req, res) => {
   try {
     const { token } = req.query;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Token not provided' });
+    }
+
+    const result = await pool.query('SELECT * FROM users WHERE token = $1', [token]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
 
     const decoded = jwt.verify(token, config.JWT_SECRET);
     if (decoded) {

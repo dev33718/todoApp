@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
-
 const Login = () => {
   const history = useHistory();
   const [email, setEmail] = useState('');
