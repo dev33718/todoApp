@@ -6,12 +6,15 @@ const Register = ({ setLoggedIn }) => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isLogin, setIsLogin] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const idempotentKey = uuidv4();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
+    setIsSubmitting(true);
+
     try {
-      const idempotentKey = uuidv4();
       const endpoint = isLogin ? 'login' : 'register';
       const response = await fetch(`http://localhost:5000/api/auth/${endpoint}`, {
         method: 'POST',
@@ -25,8 +28,12 @@ const Register = ({ setLoggedIn }) => {
 
       if (response.ok) {
         if (isLogin) {
-          setMessage('Login email sent.');
-          if (setLoggedIn) setLoggedIn(true);
+          if (data.message === 'Login email sent') {
+            setMessage('Login email sent.');
+            if (setLoggedIn) setLoggedIn(true);
+          } else if (data.message === 'Login email already sent. Please check your email.') {
+            setMessage('Login email already sent. Please check your email.');
+          }
         } else {
           setMessage('Registered successfully. Please check your email.');
         }
@@ -35,6 +42,8 @@ const Register = ({ setLoggedIn }) => {
       }
     } catch (error) {
       setMessage('Error sending email');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -49,7 +58,7 @@ const Register = ({ setLoggedIn }) => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <button type="submit" className="btn">{isLogin ? 'Login' : 'Register'}</button>
+        <button type="submit" className="btn" disabled={isSubmitting}>{isLogin ? 'Login' : 'Register'}</button>
       </form>
       <p className="message">{message}</p>
       <p className="toggle-btn" onClick={() => setIsLogin(!isLogin)}>

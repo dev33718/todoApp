@@ -13,12 +13,21 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Helper function to store idempotent key and response
 const storeIdempotentKeyResponse = async (key, response) => {
-  await pool.query(
-    "INSERT INTO idempotent_key (key, response) VALUES ($1, $2)",
-    [key, response]
-  );
+  try {
+    await pool.query(
+      "INSERT INTO idempotent_keys (key, response) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET response = EXCLUDED.response",
+      [key, response]
+    );
+  } catch (err) {
+    console.error("Error storing idempotent key response:", err);
+  }
+};
+
+// Function to check if idempotent key exists
+const checkIdempotentKey = async (key) => {
+  const result = await pool.query("SELECT * FROM idempotent_keys WHERE key = $1", [key]);
+  return result.rows.length > 0;
 };
 
 // Create a todo
@@ -27,6 +36,11 @@ const createTodo = async (req, res) => {
     const { description, category, idempotentKey } = req.body;
     if (!description || !category) {
       return res.status(400).json({ message: 'Description and category are required' });
+    }
+
+    const keyExists = await checkIdempotentKey(idempotentKey);
+    if (keyExists) {
+      return res.status(409).json({ message: 'Duplicate request' });
     }
 
     const newTodo = await pool.query(
@@ -166,6 +180,14 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, idempotentKey } = req.body;
+
+    const existingKey = await pool.query('SELECT * FROM idempotent_keys WHERE key = $1', [idempotentKey]);
+
+    if (existingKey.rows.length > 0 && existingKey.rows[0].response.message === 'Login email sent') {
+      return res.status(400).json({ message: 'Login email already sent. Please check your email.' });
+    }
+
+
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length === 0) {
       return res.status(400).json({ message: 'User not registered. Please register first.' });

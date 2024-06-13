@@ -2,25 +2,23 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
+
 const Login = () => {
   const history = useHistory();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [idempotentKey, setIdempotentKey] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isLoggingIn) return;
 
     setIsLoggingIn(true);
-
     setMessage('');
-    try {
-      if (!idempotentKey) {
-        setIdempotentKey(uuidv4());
-      }
 
+    const idempotentKey = uuidv4();
+
+    try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
@@ -33,7 +31,7 @@ const Login = () => {
 
       if (response.ok) {
         setMessage('Login email sent.');
-        history.push('/dashboard');
+        setTimeout(() => history.push('/dashboard'), 2000);
       } else {
         setMessage(data.message || 'Login failed');
       }
@@ -54,6 +52,7 @@ const Login = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          disabled={isLoggingIn}
         />
         <button type="submit" disabled={isLoggingIn}>Login</button>
       </form>
