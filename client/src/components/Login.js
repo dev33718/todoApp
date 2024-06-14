@@ -7,6 +7,11 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [idempotentKey, setIdempotentKey] = useState('');
+
+  useEffect(() => {
+    setIdempotentKey(uuidv4());
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,13 +20,12 @@ const Login = () => {
     setIsLoggingIn(true);
     setMessage('');
 
-    const idempotentKey = uuidv4();
-
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'idempotency-Key': idempotentKey
         },
         body: JSON.stringify({ email, idempotentKey }),
       });
