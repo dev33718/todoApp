@@ -25,7 +25,7 @@ const Login = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'idempotency-Key': idempotentKey
+          'Idempotency-Key': idempotentKey
         },
         body: JSON.stringify({ email, idempotentKey }),
       });
