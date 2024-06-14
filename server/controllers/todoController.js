@@ -179,12 +179,14 @@ const register = async (req, res) => {
 // Login route
 const login = async (req, res) => {
   try {
-    const { email, idempotentKey } = req.body;
+    const { email } = req.body;
+    const idempotentKey = req.headers['idempotency-key'];
 
+    // Check if the idempotency key exists
     const existingKey = await pool.query('SELECT * FROM idempotent_keys WHERE key = $1', [idempotentKey]);
-
-    if (existingKey.rows.length > 0 && existingKey.rows[0].response.message === 'Login email sent') {
-      return res.status(400).json({ message: 'Login email already sent. Please check your email.' });
+    if (existingKey.rows.length > 0) {
+      // Return the stored response if the key exists
+      return res.status(200).json({ message: 'Login email already sent. Please check your email.', response: existingKey.rows[0].response });
     }
 
     const existingUser = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
