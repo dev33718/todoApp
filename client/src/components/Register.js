@@ -13,12 +13,6 @@ const Register = ({ setLoggedIn }) => {
     setIdempotentKey(uuidv4());
   }, []);
 
-  useEffect(() => {
-    if (!idempotentKey) {
-      setIdempotentKey(uuidv4());
-    }
-  }, [idempotentKey]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
