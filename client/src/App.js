@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Register from './components/Register';
-import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
 function App() {
@@ -13,9 +12,6 @@ function App() {
         <Switch>
           <Route path="/register">
             <Register setLoggedIn={setLoggedIn} />
-          </Route>
-          <Route path="/login">
-            <Login setLoggedIn={setLoggedIn} />
           </Route>
           <Route path="/dashboard">
             <Dashboard />

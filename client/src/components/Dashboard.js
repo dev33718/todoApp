@@ -47,18 +47,24 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
-    history.push('/');
+    if (!token) {
+      console.error('No token found');
+      return;
+    }
+
     try {
       const idempotentKey = uuidv4();
       const response = await fetch('http://localhost:5000/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Idempotency-Key': idempotentKey,
         },
         body: JSON.stringify({ token, idempotentKey }),
       });
       if (response.ok) {
         localStorage.removeItem('token');
+        history.push('/');
       } else {
         const data = await response.json();
         throw new Error(data.error || 'Logout failed');

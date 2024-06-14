@@ -1,7 +1,8 @@
 const pool = require("../config/db");
 
 const idempotentCheck = async (req, res, next) => {
-  const idempotentKey = req.headers['Idempotency-Key'];
+  const idempotentKey = req.headers['idempotency-key'];
+
   if (!idempotentKey) {
     return res.status(400).json({ message: 'Idempotency-Key header is missing' });
   }

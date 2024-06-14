@@ -161,13 +161,15 @@ const register = async (req, res) => {
       text: `You are registered. Click on the link to complete the registration: ${link}`,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    transporter.sendMail(mailOptions, async (error, info) => {
       if (error) {
         console.error('Error sending email:', error);
         return res.status(500).json({ message: 'Error sending email' });
       }
+
       const response = { message: 'Registered successfully. Please check your email.' };
-      storeIdempotentKeyResponse(idempotentKey, response);
+      await storeIdempotentKeyResponse(idempotentKey, response);
+
       res.status(200).json(response);
     });
   } catch (error) {
@@ -180,12 +182,10 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email } = req.body;
-    const idempotentKey = req.headers['Idempotency-Key'];
+    const idempotentKey = req.headers['idempotency-key'];
 
-    // Check if the idempotency key exists
     const existingKey = await pool.query('SELECT * FROM idempotent_keys WHERE key = $1', [idempotentKey]);
     if (existingKey.rows.length > 0) {
-      // Return the stored response if the key exists
       return res.status(200).json({ message: 'Login email already sent. Please check your email.', response: existingKey.rows[0].response });
     }
 
@@ -268,7 +268,8 @@ const logout = async (req, res) => {
     await pool.query("UPDATE users SET token = $1 WHERE email = $2", [newToken, email]);
 
     const response = { message: 'Logged out successfully' };
-    storeIdempotentKeyResponse(idempotentKey, response);
+    await storeIdempotentKeyResponse(idempotentKey, response);
+
     res.status(200).json(response);
   } catch (error) {
     console.error("Error logging out:", error);

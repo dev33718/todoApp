@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import './Register.css';
 
@@ -7,7 +7,17 @@ const Register = ({ setLoggedIn }) => {
   const [message, setMessage] = useState('');
   const [isLogin, setIsLogin] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const idempotentKey = uuidv4();
+  const [idempotentKey, setIdempotentKey] = useState('');
+
+  useEffect(() => {
+    setIdempotentKey(uuidv4());
+  }, []);
+
+  useEffect(() => {
+    if (!idempotentKey) {
+      setIdempotentKey(uuidv4());
+    }
+  }, [idempotentKey]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,6 +30,7 @@ const Register = ({ setLoggedIn }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Idempotency-Key': idempotentKey,
         },
         body: JSON.stringify({ email, idempotentKey }),
       });
@@ -49,6 +60,14 @@ const Register = ({ setLoggedIn }) => {
     }
   };
 
+  const handleToggleLogin = () => {
+    if (isLogin && message === 'Login email sent.') {
+      setMessage('Login email already sent. Please check your email.');
+    } else {
+      setIsLogin(!isLogin);
+    }
+  };
+
   return (
     <div>
       <h2>{isLogin ? 'Login' : 'Register'}</h2>
@@ -63,7 +82,7 @@ const Register = ({ setLoggedIn }) => {
         <button type="submit" className="btn" disabled={isSubmitting}>{isLogin ? 'Login' : 'Register'}</button>
       </form>
       <p className="message">{message}</p>
-      <p className="toggle-btn" onClick={() => setIsLogin(!isLogin)}>
+      <p className="toggle-btn" onClick={handleToggleLogin}>
         {isLogin ? 'Create an account' : 'Already have an account? Login'}
       </p>
     </div>
