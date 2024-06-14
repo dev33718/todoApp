@@ -180,7 +180,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email } = req.body;
-    const idempotentKey = req.headers['idempotency-key'];
+    const idempotentKey = req.headers['idempotency-Key'];
 
     // Check if the idempotency key exists
     const existingKey = await pool.query('SELECT * FROM idempotent_keys WHERE key = $1', [idempotentKey]);
